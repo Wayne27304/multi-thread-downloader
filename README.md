@@ -14,7 +14,7 @@
 
 ## 功能
 
-- 多線程 / 多連線下載
+- 多連線下載
 - 支援最多 **100 條連線**
 - 自動偵測伺服器是否支援 HTTP Range
 - 支援 Range 時自動進行分段下載
@@ -29,22 +29,6 @@
 - Windows Tkinter 圖形介面
 - 不需要第三方 Python 套件
 
----
-
-## Screenshot
-
-> 將你的程式截圖放在這裡即可。
-
-```text
-docs/
-└── screenshot.png
-```
-
-例如：
-
-```markdown
-![Multi-Thread Downloader](docs/screenshot.png)
-```
 
 ---
 
@@ -60,7 +44,7 @@ docs/
 
 ## 安裝
 
-### 1. Clone 專案
+### 1. 下載專案 (Git)
 
 ```bash
 git clone https://github.com/Wayne27304/multi-thread-downloader.git
@@ -69,16 +53,8 @@ cd multi-thread-downloader
 
 ### 2. 啟動程式
 
-假設主程式檔案為 `main.py`：
-
 ```bash
 python main.py
-```
-
-Windows 也可以使用：
-
-```powershell
-py main.py
 ```
 
 ---
