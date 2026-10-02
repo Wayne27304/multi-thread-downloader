@@ -10,77 +10,12 @@ permissions:
   contents: write
 
 jobs:
-  build-windows:
-    name: Build Windows ${{ matrix.arch }}
-    runs-on: ${{ matrix.runner }}
-
-    strategy:
-      matrix:
-        include:
-          - arch: x64
-            runner: windows-latest
-            python-architecture: x64
-            output: Multi-Thread-Downloader-Windows-x64.exe
-
-          - arch: x86
-            runner: windows-2022
-            python-architecture: x86
-            output: Multi-Thread-Downloader-Windows-x86.exe
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-          architecture: ${{ matrix.python-architecture }}
-
-      - name: Install PyInstaller
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install pyinstaller
-
-      - name: Build
-        run: |
-          pyinstaller `
-            --onefile `
-            --windowed `
-            --clean `
-            --name "${{ matrix.output }}" `
-            main.py
-
-      - name: Rename output
-        shell: pwsh
-        run: |
-          if (Test-Path "dist/${{ matrix.output }}") {
-            Write-Host "Build successful: dist/${{ matrix.output }}"
-          } else {
-            Write-Error "Build output was not found."
-            exit 1
-          }
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: windows-${{ matrix.arch }}
-          path: dist/${{ matrix.output }}
-
-  build-linux:
-    name: Build Linux ${{ matrix.arch }}
-    runs-on: ${{ matrix.runner }}
-
-    strategy:
-      matrix:
-        include:
-          - arch: x64
-            runner: ubuntu-22.04
-            output: Multi-Thread-Downloader-Linux-x64
-
-          - arch: x86
-            runner: ubuntu-22.04
-            output: Multi-Thread-Downloader-Linux-x86
+  # ============================================================
+  # Windows x64
+  # ============================================================
+  windows-x64:
+    name: Windows x64
+    runs-on: windows-latest
 
     steps:
       - name: Checkout
@@ -92,78 +27,138 @@ jobs:
           python-version: "3.12"
           architecture: x64
 
-      - name: Install 32-bit build dependencies
-        if: matrix.arch == 'x86'
+      - name: Install PyInstaller
         run: |
-          sudo dpkg --add-architecture i386
-          sudo apt-get update
-          sudo apt-get install -y gcc-multilib g++-multilib libc6-dev-i386
+          python -m pip install --upgrade pip
+          pip install pyinstaller
+
+      - name: Build Windows x64
+        run: |
+          pyinstaller --onefile --windowed `
+            --name "Multi-Thread-Downloader-Windows-x64" `
+            app.py
+
+      - name: Upload Windows x64
+        uses: actions/upload-artifact@v4
+        with:
+          name: Multi-Thread-Downloader-Windows-x64
+          path: dist/Multi-Thread-Downloader-Windows-x64.exe
+
+
+  # ============================================================
+  # Windows x86
+  # ============================================================
+  windows-x86:
+    name: Windows x86
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          architecture: x86
 
       - name: Install PyInstaller
         run: |
           python -m pip install --upgrade pip
-          python -m pip install pyinstaller
+          pip install pyinstaller
 
-      - name: Build
+      - name: Build Windows x86
         run: |
-          pyinstaller \
-            --onefile \
-            --windowed \
-            --clean \
-            --name "${{ matrix.output }}" \
-            main.py
+          pyinstaller --onefile --windowed `
+            --name "Multi-Thread-Downloader-Windows-x86" `
+            app.py
 
-      - name: Verify build
-        run: |
-          if [ -f "dist/${{ matrix.output }}" ]; then
-            file "dist/${{ matrix.output }}"
-            chmod +x "dist/${{ matrix.output }}"
-          else
-            echo "Build output was not found."
-            exit 1
-          fi
-
-      - name: Upload artifact
+      - name: Upload Windows x86
         uses: actions/upload-artifact@v4
         with:
-          name: linux-${{ matrix.arch }}
-          path: dist/${{ matrix.output }}
+          name: Multi-Thread-Downloader-Windows-x86
+          path: dist/Multi-Thread-Downloader-Windows-x86.exe
 
+
+  # ============================================================
+  # Linux x64
+  # ============================================================
+  linux-x64:
+    name: Linux x64
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          architecture: x64
+
+      - name: Install PyInstaller
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller
+
+      - name: Build Linux x64
+        run: |
+          pyinstaller --onefile --windowed \
+            --name "Multi-Thread-Downloader-Linux-x64" \
+            app.py
+
+      - name: Upload Linux x64
+        uses: actions/upload-artifact@v4
+        with:
+          name: Multi-Thread-Downloader-Linux-x64
+          path: dist/Multi-Thread-Downloader-Linux-x64
+
+
+  # ============================================================
+  # Create GitHub Release
+  # ============================================================
   release:
     name: Create Release
     needs:
-      - build-windows
-      - build-linux
+      - windows-x64
+      - windows-x86
+      - linux-x64
 
     runs-on: ubuntu-latest
 
     steps:
-      - name: Download all artifacts
+      - name: Download Windows x64
         uses: actions/download-artifact@v4
         with:
+          name: Multi-Thread-Downloader-Windows-x64
           path: release
 
-      - name: Prepare release files
+      - name: Download Windows x86
+        uses: actions/download-artifact@v4
+        with:
+          name: Multi-Thread-Downloader-Windows-x86
+          path: release
+
+      - name: Download Linux x64
+        uses: actions/download-artifact@v4
+        with:
+          name: Multi-Thread-Downloader-Linux-x64
+          path: release
+
+      - name: Show release files
         run: |
-          mkdir -p release-files
-
-          find release -type f -exec cp {} release-files/ \;
-
-          chmod +x release-files/Multi-Thread-Downloader-Linux-x64 || true
-          chmod +x release-files/Multi-Thread-Downloader-Linux-x86 || true
-
-          ls -lah release-files
+          ls -lah release
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.0.${{ github.run_number }}
-          name: Multi-Thread Downloader v1.0.${{ github.run_number }}
+          tag_name: "v1.0.${{ github.run_number }}"
+          name: "Multi-Thread Downloader v1.0.${{ github.run_number }}"
           generate_release_notes: true
           files: |
-            release-files/Multi-Thread-Downloader-Windows-x64.exe
-            release-files/Multi-Thread-Downloader-Windows-x86.exe
-            release-files/Multi-Thread-Downloader-Linux-x64
-            release-files/Multi-Thread-Downloader-Linux-x86
+            release/Multi-Thread-Downloader-Windows-x64.exe
+            release/Multi-Thread-Downloader-Windows-x86.exe
+            release/Multi-Thread-Downloader-Linux-x64
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
