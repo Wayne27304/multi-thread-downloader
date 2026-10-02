@@ -261,30 +261,6 @@ Minecraft.zip.part
 
 ---
 
-## 專案結構
-
-```text
-multi-thread-downloader/
-│
-├── README.md
-├── en.md
-└── main.py
-```
-
-如果之後加入圖片：
-
-```text
-multi-thread-downloader/
-│
-├── README.md
-├── en.md
-├── main.py
-└── docs/
-    └── screenshot.png
-```
-
----
-
 ## 使用的 Python 標準函式庫
 
 本專案主要使用 Python Standard Library：
@@ -301,18 +277,6 @@ multi-thread-downloader/
 不需要額外安裝第三方下載套件。
 
 ---
-
-## 注意事項
-
-### 伺服器必須允許 Range
-
-多線程模式需要伺服器支援：
-
-```http
-Range
-```
-
-如果伺服器不支援，程式會自動切換成單一連線。
 
 ### 高連線數不一定比較快
 
